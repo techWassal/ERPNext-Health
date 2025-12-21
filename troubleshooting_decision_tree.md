@@ -46,7 +46,8 @@ Start: Application Not Working?
 | 4 | Healthcare (Marley) | Healthcare Module | version-15 |
 | 5 | Telephony | Call Management | develop |
 | 6 | Helpdesk | Support Ticket System | main |
-| 7 | ZATCA | Saudi Arabia e-invoicing | main |
+| 7 | Frappe Insights | Business Intelligence & Analytics | main |
+| 8 | ZATCA | Saudi Arabia e-invoicing | main |
 
 ---
 
