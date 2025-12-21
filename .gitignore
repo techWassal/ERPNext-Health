@@ -1,0 +1,7 @@
+.env
+venv/
+__pycache__/
+*.pyc
+frappe_docker/
+asset_sync_temp/
+*.log
