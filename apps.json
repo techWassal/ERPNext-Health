@@ -30,5 +30,9 @@
     {
         "url": "https://github.com/ERPGulf/zatca_erpgulf",
         "branch": "main"
+    },
+    {
+        "url": "https://github.com/techWassal/telehealth-frappe-platform",
+        "branch": "main"
     }
 ]

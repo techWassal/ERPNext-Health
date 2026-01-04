@@ -100,6 +100,7 @@ RUN bench get-app --skip-assets --branch=version-15 healthcare https://github.co
 RUN bench get-app --skip-assets --branch=main helpdesk https://github.com/frappe/helpdesk
 RUN bench get-app --skip-assets --branch=main insights https://github.com/frappe/insights
 RUN bench get-app --skip-assets --branch=main zatca_erpgulf https://github.com/ERPGulf/zatca_erpgulf
+RUN bench get-app --skip-assets --branch=main telehealth_platform https://github.com/techWassal/telehealth-frappe-platform
 EOF
 
     cd "${DEPLOY_DIR}/frappe_docker"
@@ -153,7 +154,7 @@ services:
         wait-for-it -t 120 redis-cache:6379;
         wait-for-it -t 120 redis-queue:6379;
         until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]]; do sleep 5; done;
-        bench new-site --mariadb-root-password=SecureRootPassword456! --admin-password=admin123 --install-app erpnext --install-app payments --install-app hrms --install-app healthcare --install-app telephony --install-app helpdesk --install-app insights --install-app zatca_erpgulf frontend || true;
+        bench new-site --mariadb-root-password=SecureRootPassword456! --admin-password=admin123 --install-app erpnext --install-app payments --install-app hrms --install-app healthcare --install-app telephony --install-app helpdesk --install-app insights --install-app zatca_erpgulf --install-app telehealth_platform frontend || true;
 
   db:
     image: mariadb:10.6
@@ -394,6 +395,7 @@ print_summary() {
     echo "  6. Frappe Helpdesk"
     echo "  7. Frappe Insights"
     echo "  8. ZATCA e-invoicing"
+    echo "  9. Telehealth Platform"
     echo ""
     echo "IMPORTANT: Change the admin password immediately!"
     echo ""

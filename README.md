@@ -14,6 +14,7 @@ Production-ready deployment of ERPNext with multiple Frappe apps on Ubuntu 22.04
 | 6 | Frappe Helpdesk | Support Ticket System | main |
 | 7 | Frappe Insights | Business Intelligence | main |
 | 8 | ZATCA e-invoicing | Saudi Arabia e-invoicing | main |
+| 9 | Telehealth Platform | Core Telehealth Functionality | main |
 
 ## Quick Start
 

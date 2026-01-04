@@ -293,6 +293,7 @@ RUN bench get-app --skip-assets --branch=version-15 healthcare https://github.co
 RUN bench get-app --skip-assets --branch=main helpdesk https://github.com/frappe/helpdesk
 RUN bench get-app --skip-assets --branch=main insights https://github.com/frappe/insights
 RUN bench get-app --skip-assets --branch=main zatca_erpgulf https://github.com/ERPGulf/zatca_erpgulf
+RUN bench get-app --skip-assets --branch=main telehealth_platform https://github.com/techWassal/telehealth-frappe-platform
 EOF
     
     # Build the image

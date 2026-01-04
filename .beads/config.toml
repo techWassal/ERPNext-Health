@@ -1,0 +1,14 @@
+[project]
+name = "Telehealth Deployment"
+role = "deployment"
+version = "1.0.0"
+
+[metadata_schema]
+required_fields = [
+  "target_environment",      # e.g., "staging", "production"
+  "components"               # list of components being deployed
+]
+
+[task_types]
+allowed = ["deployment", "infrastructure", "maintenance"]
+default = "deployment"
