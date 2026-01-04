@@ -538,6 +538,7 @@ show_usage() {
 main() {
     local force_rebuild=false
     local skip_backup=false
+    local NEW_VERSION="" # Initialize to avoid capturing flags from global scope
     
     # Parse arguments
     while [[ $# -gt 0 ]]; do
