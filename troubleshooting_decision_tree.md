@@ -95,25 +95,36 @@ docker compose exec db mysql -uroot -pSecureRootPassword456! -e "SELECT User, Ho
 docker compose exec backend cat /home/frappe/frappe-bench/sites/frontend/site_config.json
 ```
 
-**Solution:**
-```bash
-# Get db_name from site_config
-DB_NAME=$(docker compose exec backend cat /home/frappe/frappe-bench/sites/frontend/site_config.json | grep -o '"db_name": "[^"]*"' | cut -d'"' -f4)
+**Solution (Automated):**
+Run `python3 troubleshoot.py` and select **Option 3**. Choose the **[Force]** option to sync credentials to project defaults.
 
-# Drop and recreate user with correct password
-docker compose exec db mysql -uroot -pSecureRootPassword456! -e "
-DROP USER IF EXISTS '${DB_NAME}'@'%';
-CREATE USER '${DB_NAME}'@'%' IDENTIFIED BY 'SecureRootPassword456!';
-GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_NAME}'@'%';
-FLUSH PRIVILEGES;
-"
+**Solution (Manual Deep Reset):**
+If the automated tool fails, run these steps manually to forcefully sync credentials:
 
-# Update site_config
-docker compose exec backend bash -c "echo '{\"db_name\": \"${DB_NAME}\", \"db_password\": \"SecureRootPassword456!\", \"db_type\": \"mariadb\", \"db_host\": \"db\"}' > /home/frappe/frappe-bench/sites/frontend/site_config.json"
+1. **Get your DB Name** from `site_config.json`:
+   ```bash
+   docker compose exec backend cat /home/frappe/frappe-bench/sites/frontend/site_config.json
+   ```
 
-# Restart
-docker compose restart backend
-```
+2. **Reset the Database User** (Replace `${DB_NAME}` with the name from step 1):
+   ```bash
+   docker compose exec db mysql -uroot -pSecureRootPassword456! -e "
+   DROP USER IF EXISTS '${DB_NAME}'@'%';
+   CREATE USER '${DB_NAME}'@'%' IDENTIFIED BY 'SecureRootPassword456!';
+   GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_NAME}'@'%';
+   FLUSH PRIVILEGES;
+   "
+   ```
+
+3. **Force Update `site_config.json`**:
+   ```bash
+   docker compose exec backend bash -c "echo '{\"db_name\": \"${DB_NAME}\", \"db_password\": \"SecureRootPassword456!\", \"db_type\": \"mariadb\", \"db_host\": \"db\"}' > /home/frappe/frappe-bench/sites/frontend/site_config.json"
+   ```
+
+4. **Restart core services**:
+   ```bash
+   docker compose restart backend
+   ```
 
 ---
 

@@ -131,6 +131,9 @@ def diagnose_assets():
 
 def fix_db_permissions():
     print_header("Fixing Database Permissions")
+    print("[SAFE] This function only modifies data inside your CURRENT containers.")
+    print("[SAFE] It will NOT create new volumes or delete any data.")
+    print("-" * 60)
     print("This will recreate the database user with the password from site_config.json")
     
     # 1. Get DB Name
@@ -148,15 +151,44 @@ def fix_db_permissions():
             
         print(f"Found DB Name: {db_name}")
         
+        print("\nOptions:")
+        print("1. [Safe] Recreate user with EXISTING password from site_config.json")
+        print("2. [Force] Sync password to PROJECT DEFAULT (SecureRootPassword456!)")
+        print("0. Cancel")
+        
+        db_choice = input("\nSelect option: ")
+        
+        target_pass = db_pass
+        sync_config = False
+        
+        if db_choice == '2':
+            target_pass = "SecureRootPassword456!"
+            sync_config = True
+        elif db_choice != '1':
+            return
+
         # 2. SQL Commands
         sql = f"""
         DROP USER IF EXISTS '{db_name}'@'%';
-        CREATE USER '{db_name}'@'%' IDENTIFIED BY '{db_pass}';
+        CREATE USER '{db_name}'@'%' IDENTIFIED BY '{target_pass}';
         GRANT ALL PRIVILEGES ON `{db_name}`.* TO '{db_name}'@'%';
         FLUSH PRIVILEGES;
         """
         
-        print("Executing SQL fix...")
+        if sync_config:
+            print(f">> Updating site_config.json with new password...")
+            new_config = config.copy()
+            new_config['db_password'] = target_pass
+            new_config_json = json.dumps(new_config, indent=1)
+            # Escaping for shell
+            escaped_json = new_config_json.replace('"', '\\"')
+            update_config_cmd = [
+                "docker", "compose", "-f", COMPOSE_FILE, "exec", "-T", CONTAINER_BACKEND,
+                "bash", "-c", f"echo '{escaped_json}' > /home/frappe/frappe-bench/sites/{SITE_NAME}/site_config.json"
+            ]
+            run_command(update_config_cmd)
+
+        print(f"Executing SQL fix (using {'DEFAULT' if sync_config else 'EXISTING'} password)...")
         # Note: We assume root password is in .env or default. 
         # For safety/simplicity in this script, we ask user or try default from known content
         # In a real script we might parse .env
@@ -176,6 +208,9 @@ def fix_db_permissions():
 
 def fix_assets():
     print_header("Fixing Assets (Force Sync via Host)")
+    print("[SAFE] This function only syncs files between your CURRENT backend/frontend.")
+    print("[SAFE] It will NOT create new volumes or delete site data.")
+    print("-" * 60)
     print("This will regenerate assets, resolve symlinks, and force-copy them to the frontend.")
     
     # 1. Regenerate
