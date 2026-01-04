@@ -86,11 +86,11 @@ preflight_checks() {
         exit 1
     fi
 
-    # Create backup directory if it doesn't exist
-    mkdir -p "${BACKUP_DIR}"/{daily,weekly,monthly}
-
-    # Ensure log file exists
-    touch "${LOG_FILE}"
+    # Create backup directory if it doesn't exist (Handled in main)
+    # mkdir -p "${BACKUP_DIR}"/{daily,weekly,monthly}
+    
+    # Ensure log file exists (Handled in main)
+    # touch "${LOG_FILE}"
 
     # Check disk space (require at least 10GB free)
     local free_space
@@ -359,14 +359,18 @@ list_backups() {
 main() {
     local backup_type="${1:-daily}"
 
+    # Create backup directory if it doesn't exist (Move this up to ensure logging works)
+    mkdir -p "${BACKUP_DIR}"/{daily,weekly,monthly}
+    touch "${LOG_FILE}"
+
     log_info "=========================================="
     log_info "ERPNext Backup Script Started"
     log_info "Type: ${backup_type}"
     log_info "Site: ${SITE_NAME}"
-    log_info "Apps: ERPNext, Payments, HRMS, Healthcare, Telephony, Helpdesk, ZATCA"
+    log_info "Apps: ERPNext, Payments, HRMS, Healthcare, Telephony, Helpdesk, ZATCA, Telehealth Platform"
     log_info "=========================================="
 
-    # Run checks
+    # Run remaining checks
     preflight_checks
 
     # Create backup
