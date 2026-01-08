@@ -313,7 +313,7 @@ EOF
 }
 
 # -----------------------------------------------------------------------------
-# Update Process (Reordered for minimal downtime)
+# Update Process (Staged Deployment for Reliability)
 # -----------------------------------------------------------------------------
 update_services() {
     local version="$1"
@@ -327,16 +327,47 @@ update_services() {
         echo "ERPNEXT_VERSION=${version}" >> "${SCRIPT_DIR}/.env"
     fi
     
-    # Recreate only essential services first (not Redis, not workers during initial swap)
-    log_info "Recreating backend and frontend containers..."
-    docker compose -f "${COMPOSE_FILE}" up -d --force-recreate backend frontend 2>&1 | tee -a "${LOG_FILE}"
+    # STAGED DEPLOYMENT: Start infrastructure first
+    log_info "Stage 1: Starting infrastructure (db, redis)..."
+    docker compose -f "${COMPOSE_FILE}" up -d db redis-cache redis-queue 2>&1 | tee -a "${LOG_FILE}"
     
-    # Wait for backend to start
-    if ! wait_for_backend_health 120; then
-        log_error "Backend failed to start after container update"
+    # Wait for db to be healthy
+    log_info "Waiting for database to be healthy (30s)..."
+    local db_timeout=60
+    local db_elapsed=0
+    while [[ $db_elapsed -lt $db_timeout ]]; do
+        if docker compose -f "${COMPOSE_FILE}" exec -T db mysqladmin ping -uroot -pSecureRootPassword456! 2>/dev/null | grep -q "alive"; then
+            log_success "Database is healthy"
+            break
+        fi
+        sleep 5
+        db_elapsed=$((db_elapsed + 5))
+        log_info "Waiting for db... (${db_elapsed}s/${db_timeout}s)"
+    done
+    
+    # Wait for redis
+    log_info "Waiting for Redis to be ready..."
+    sleep 10
+    if docker compose -f "${COMPOSE_FILE}" exec -T redis-cache redis-cli ping 2>/dev/null | grep -q "PONG"; then
+        log_success "Redis is healthy"
+    else
+        log_warn "Redis may not be fully ready, continuing anyway..."
+    fi
+    
+    # STAGED DEPLOYMENT: Start backend with configurator
+    log_info "Stage 2: Starting backend and configurator..."
+    docker compose -f "${COMPOSE_FILE}" up -d backend configurator 2>&1 | tee -a "${LOG_FILE}"
+    
+    # Wait for backend to start (with extended timeout since db/redis are now guaranteed)
+    if ! wait_for_backend_health 180; then
+        log_error "Backend failed to start after staged deployment"
         APPLICATION_ROLLBACK_NEEDED=true
         return 1
     fi
+    
+    # STAGED DEPLOYMENT: Start all remaining services
+    log_info "Stage 3: Starting all remaining services..."
+    docker compose -f "${COMPOSE_FILE}" up -d 2>&1 | tee -a "${LOG_FILE}"
     
     # Run migrations
     log_warn "=========================================="
