@@ -18,12 +18,15 @@ jobs:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            # Define the deployment directory (adjust if different)
-            DEPLOY_DIR="/opt/erpnext"
+            # Define the deployment directory from secret or default
+            DEPLOY_DIR="${{ secrets.DEPLOY_PATH }}"
+            if [ -z "$DEPLOY_DIR" ]; then
+              DEPLOY_DIR="/opt/erpnext"
+            fi
             
             echo "🚀 Connecting to VPS..."
             
