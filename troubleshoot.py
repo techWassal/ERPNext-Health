@@ -247,9 +247,9 @@ def fix_assets():
     # 4. Inject to Frontend (Both Paths)
     print(">> Injecting assets into Frontend...")
     
-    # Path A: Nginx Root
-    run_command(["docker", "compose", "-f", COMPOSE_FILE, "exec", "-T", "-u", "root", "frontend", "rm", "-rf", "/home/frappe/frappe-bench/sites/assets"])
-    run_command(["docker", "compose", "-f", COMPOSE_FILE, "exec", "-T", "-u", "root", "frontend", "mkdir", "-p", "/home/frappe/frappe-bench/sites/assets"])
+    # Path A: Nginx Root (Real Volume)
+    # We must clear CONTENTS (*), not the folder itself, or Docker throws "Device or resource busy"
+    run_command(["docker", "compose", "-f", COMPOSE_FILE, "exec", "-T", "-u", "root", "frontend", "bash", "-c", "rm -rf /home/frappe/frappe-bench/sites/assets/*"])
     run_command(["docker", "compose", "-f", COMPOSE_FILE, "cp", "asset_sync_temp/.", "frontend:/home/frappe/frappe-bench/sites/assets/"])
     run_command(["docker", "compose", "-f", COMPOSE_FILE, "exec", "-T", "-u", "root", "frontend", "chown", "-R", "101:101", "/home/frappe/frappe-bench/sites/assets"])
     

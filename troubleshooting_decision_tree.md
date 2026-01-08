@@ -426,6 +426,36 @@ docker compose exec backend bench --site frontend clear-cache
 docker compose restart frontend
 ```
 
+#### Persistent Asset 404s (The "Grand Sync")
+
+If generic rebuilds fail, it's likely a **Symlink/Volume Mismatch**. The Frontend container is missing the `apps` source folder, so symlinks in `assets` are broken divots.
+
+**Fix:**
+```bash
+# 1. Materialize Symlinks on Backend (Convert links to real folders)
+docker compose exec backend bash -c 'cd /home/frappe/frappe-bench/sites/assets && \
+for f in *; do \
+  if [ -L "$f" ]; then \
+    target=$(readlink "$f"); \
+    rm "$f"; \
+    cp -R "$target" "$f"; \
+  fi; \
+done'
+
+# 2. Sync "Perfect" Assets from Backend -> Host -> Frontend
+# (We copy to Host first because direct-pipe often fails with permissions)
+docker compose cp backend:/home/frappe/frappe-bench/sites/assets ./assets_fixed
+
+# 3. Wipe Frontend (Contents only) & Inject
+docker compose exec -u root frontend bash -c "rm -rf /home/frappe/frappe-bench/sites/assets/*"
+docker compose cp ./assets_fixed/. frontend:/home/frappe/frappe-bench/sites/assets/
+
+# 4. Fix Permissions & Restart
+docker compose exec -u root frontend chown -R 101:101 /home/frappe/frappe-bench/sites/assets
+rm -rf assets_fixed
+docker compose restart frontend
+```
+
 ---
 
 ## Quick Reference Commands
